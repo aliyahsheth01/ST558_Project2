@@ -19,6 +19,22 @@ class(tablet_data$compression_date)
 range(tablet_data$compression_date, na.rm = TRUE)
 sum(is.na(tablet_data$compression_date))
 
+# The routine registration records are missing target hardness values in the workbook, but their intended targets were preset based on manufacturing
+# instructions: 4 kp for Low strength and 7 kp for both Mid and High strengths. I first retain any target that is already recorded. For registration
+# records with a missing target, I then assign the preset value for that strength. These values describe the intended settings, rather
+# than the hardness actually measured on the tablets.
+tablet_data <- tablet_data |>
+  mutate(
+    target_hardness_kp = ifelse(
+      study == "Registration" & is.na(target_hardness_kp),
+      ifelse(strength == "Low", 4, 7),
+      target_hardness_kp
+    )
+  )
+
+# I confirm that no target hardness values remain missing.
+sum(is.na(tablet_data$target_hardness_kp))
+
 # Check the number of rows and columns.
 dim(tablet_data)
 

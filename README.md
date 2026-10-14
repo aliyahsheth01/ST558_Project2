@@ -1,2 +1,53 @@
-# ST558_Project2
-Shiny app for exploring tablet manufacturing data
+# Tablet In-Process Data Explorer
+
+This project is being developed for ST 558 Project 2. Its purpose is to create a Shiny app that helps users explore tablet manufacturing data and understand how tablet weight, thickness, and hardness vary across studies, strengths, and manufacturing conditions.
+
+Deployed app: Not yet deployed.
+
+Static exploration: [data_exploration.R](data_exploration.R)
+
+## About the data
+
+`data/tablet_ipc_deidentified.xlsx` contains 4,850 individual tablet measurements from 52 compression lots of an immediate-release tablet product under development, made in three strengths (Low, Mid, High) across two engineering studies and one registration batch campaign. During each lot, samples of 20–30 tablets were pulled at defined points in the run (pre-start, beginning, middle, end) and each tablet was measured for weight, thickness, and breaking force (hardness), either on an bulk automated tablet tester or by individual hardness tester
+
+| Column | Type | Description |
+|---|---|---|
+| `tablet_id` | integer | Row identifier |
+| `study` | categorical (3) | Eng Study 1, Eng Study 2, Registration |
+| `strength` | categorical (3) | Low, Mid, High |
+| `blend` | categorical (9) | Common final blend the lot was compressed from (B1–B9) |
+| `lot` | categorical (52) | Compression lot / sub-lot (L01–L52) |
+| `condition` | categorical (5) | Registration, Target hardness, Compressibility curve, Speed DOE, Score functionality |
+| `target_hardness_kp` | numeric | Hardness setpoint for the lot, where stated (data for registration lots added based on manufacturing records) |
+| `speed_setting` | categorical (5) | Nominal, or the turret/feeder corner for Speed DOE lots |
+| `sampling_point` | categorical (4) | Pre-Start, Beginning, Middle, End |
+| `sampling_detail` | categorical (10) | Original sampling label before grouping |
+| `equipment` | categorical (2) | AT4 (automated tester) or Manual (individual tablet hardness tester) |
+| `sample_id` | text | One IPC pull of 20–30 tablets (lot–point–equipment) |
+| `tablet_no` | integer | Tablet number within the sample |
+| `weight_mg` | numeric | Individual tablet weight, mg |
+| `thickness_mm` | numeric | Tablet thickness, mm |
+| `hardness_kp` | numeric | Tablet breaking force, kp |
+| `compression_date` | date | Date of measurement (not recorded for Eng Study 1) |
+
+Measurement availability varies across records. AT4 records contain weight and thickness, and some also contain hardness. Most manual records contain hardness only, although some include all three measurements. Missing values will be handled separately for each summary or graph.
+
+During data preparation, missing target hardness values for registration records are filled using the preset targets: 4 kp for Low strength and 7 kp for Mid and High strengths. Existing target values are retained. Compression dates are also converted to R’s Date class. These preparation steps are applied to the imported data in R; the Excel source retains its original contents.
+
+## App features
+
+The app allows users to:
+
+- Filter the data by categorical variables and numerical ranges.
+- Apply their filter selections using a button.
+- Browse and download the selected records.
+- Create frequency tables and numerical summaries.
+- Explore relationships through graphs, with choices for variables, grouping, coloring, and faceting.
+
+The app will contain three main tabs: About, Data Download, and Data Exploration.
+
+## Repository files
+
+- `ST558_Project2.Rproj` opens the project in RStudio.
+- `data/tablet_ipc_deidentified.xlsx` contains the dataset and supporting worksheets.
+- `data_exploration.R` contains the static data exploration developed before building the app.
