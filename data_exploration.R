@@ -35,6 +35,13 @@ tablet_data <- tablet_data |>
 # I confirm that no target hardness values remain missing.
 sum(is.na(tablet_data$target_hardness_kp))
 
+# The tablet number identifies a tablet within each sample. I store it as character to make its role as an identifier clear.
+tablet_data <- tablet_data |>
+  mutate(tablet_no = as.character(tablet_no))
+
+# I check that the tablet number is now stored as character.
+class(tablet_data$tablet_no)
+
 # Check the number of rows and columns.
 dim(tablet_data)
 
@@ -116,3 +123,143 @@ thickness_summary <- tablet_data |>
 
 # I display the results to complete the initial numerical summaries of weight, hardness, and thickness by strength.
 thickness_summary
+
+# My first graph shows how many tablet-level records come from each study. This gives a visual overview of the dataset before
+# I explore the individual tablet measurements. I place study on the horizontal axis. The bar layer counts the
+# records in each study automatically, and I add a title and axis labels to explain what the graph shows.
+study_barplot <- ggplot(
+  data = tablet_data,
+  aes(x = study)
+) +
+  geom_bar() +
+  labs(
+    title = "Number of Tablet Records by Study",
+    x = "Study",
+    y = "Number of records"
+  )
+
+# I display the saved plot in RStudio's Plots pane.
+study_barplot
+
+# Next, I break each study's record count down by tablet strength.Showing the strengths side by side lets me compare how many
+# records are available for Low, Mid, and High within each study.Mapping strength to fill gives each strength a different color.
+# The dodge position places those colored bars beside one another.
+study_strength_barplot <- ggplot(
+  data = tablet_data,
+  aes(x = study, fill = strength)
+) +
+  geom_bar(position = "dodge") +
+  labs(
+    title = "Tablet Records by Study and Strength",
+    x = "Study",
+    y = "Number of records"
+  ) +
+  scale_fill_discrete("Tablet strength")
+
+# I display the plot to compare the study and strength combinations.
+study_strength_barplot
+
+# I now explore the distribution of tablet weight within each strength. A histogram groups weights into intervals and shows
+# how many records fall within each interval.I use intervals that are 1 mg wide and create a separate panel
+# for each strength. Each panel has its own horizontal range so the weight distribution for that strength is easy to examine.
+weight_histogram <- ggplot(
+  data = tablet_data,
+  aes(x = weight_mg)
+) +
+  geom_histogram(
+    binwidth = 1,
+    center = 0,
+    fill = "steelblue",
+    color = "white",
+    na.rm = TRUE
+  ) +
+  facet_wrap(~ strength, scales = "free_x") +
+  labs(
+    title = "Tablet Weight Distribution by Strength",
+    x = "Tablet weight (mg)",
+    y = "Number of records"
+  )
+
+# I display the three distributions together. When comparing their spread, I check the horizontal-axis values because the panels
+# use different weight ranges.
+weight_histogram
+
+# Next, I compare the hardness distributions across studies within each strength. Box plots help me examine the typical hardness,
+# the spread of the measurements, and unusually high or low values. I place strength on the horizontal axis and hardness on the
+# vertical axis. Coloring the boxes by study lets me compare the three studies within each strength.
+hardness_boxplot <- ggplot(
+  data = tablet_data,
+  aes(x = strength, y = hardness_kp, fill = study)
+) +
+  geom_boxplot(na.rm = TRUE) +
+  labs(
+    title = "Tablet Hardness by Strength and Study",
+    x = "Tablet strength",
+    y = "Hardness (kp)"
+  ) +
+  scale_fill_discrete("Study")
+
+# I display the plot, keeping in mind that the engineering studies include experiments with different intended hardness settings.
+hardness_boxplot
+
+# I explore how tablet thickness varies with the target hardness setting for each strength. Target hardness describes the intended
+# setting for the lot, while thickness is measured on each tablet. Each point represents a record with both values available.
+# Coloring by strength helps me distinguish the three groups.
+target_thickness_scatterplot <- ggplot(
+  data = tablet_data,
+  aes(
+    x = target_hardness_kp,
+    y = thickness_mm,
+    color = strength
+  )
+) +
+  geom_point(alpha = 0.5, na.rm = TRUE) +
+  labs(
+    title = "Tablet Thickness by Target Hardness and Strength",
+    x = "Target hardness (kp)",
+    y = "Tablet thickness (mm)",
+    color = "Tablet strength"
+  )
+
+# I display the plot to examine thickness across the target settings.
+target_thickness_scatterplot
+
+# I compare relative thickness variability across target hardness
+# settings and strengths. For each combination, I calculate the
+# number of thickness readings, their mean, and standard deviation.
+# I then express the standard deviation as a percentage of the mean.
+thickness_rsd_data <- tablet_data |>
+  filter(!is.na(thickness_mm)) |>
+  group_by(strength, target_hardness_kp) |>
+  summarize(
+    n_thickness = n(),
+    mean_mm = mean(thickness_mm),
+    sd_mm = sd(thickness_mm),
+    .groups = "drop"
+  ) |>
+  mutate(
+    rsd_percent = 100 * sd_mm / mean_mm
+  )
+
+# Each heatmap cell shows thickness RSD for one target hardness
+# and strength combination. Higher values indicate greater
+# thickness variation relative to the mean thickness.
+thickness_rsd_heatmap <- ggplot(
+  data = thickness_rsd_data,
+  aes(
+    x = factor(target_hardness_kp),
+    y = strength,
+    fill = rsd_percent
+  )
+) +
+  geom_tile(color = "white") +
+  labs(
+    title = "Thickness RSD by Target Hardness and Strength",
+    x = "Target hardness (kp)",
+    y = "Tablet strength",
+    fill = "Thickness RSD (%)",
+    caption = "RSD pools measurements across contributing lots and studies."
+  )
+
+# I display the heatmap to compare relative thickness variability.
+thickness_rsd_heatmap
