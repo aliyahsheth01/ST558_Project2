@@ -142,10 +142,135 @@ ui <- fluidPage(
         
         tabPanel(
           "About",
+          
+          # I introduce the app's purpose before explaining the data
+          # and how someone can explore them.
           h3("About this app"),
+          
           p(
-            "Explore tablet weight, thickness, and hardness across",
-            "studies, strengths, and manufacturing conditions."
+            "The Tablet In-Process Data Explorer was developed for",
+            "ST 558 Project 2. It helps users explore in-process tablet weight,",
+            "thickness, and hardness through tablet compression across studies,",
+            "strengths, and manufacturing conditions."
+          ),
+          
+          # I describe what each record represents and identify the
+          # workbook that supplies the data.
+          
+          # I include an example of a rotary tablet press to connect the
+          # measurements with the compression process. I credit Natoli
+          # and provide a link to the equipment's product page.
+          img(
+            src = "tablet_press.jpg",
+            alt = "Natoli NP-255 rotary tablet press",
+            width = 350
+          ),
+          
+          p(
+            "Example of a rotary tablet press. Image source: ",
+            tags$a(
+              "Natoli Engineering — NP-255",
+              href = paste0(
+                "https://natoli.com/products/tablet-presses/",
+                "production-tablet-presses/np-255/"
+              ),
+              target = "_blank"
+            )
+          ),
+          
+          h4("About the data"),
+          
+          p(
+            "The dataset contains 4,850 tablet records from 52 compression",
+            "lots of an immediate-release tablet product under development.",
+            "It includes three strengths (Low, Mid, and High), two",
+            "engineering studies, and one registration batch campaign."
+          ),
+          
+          p(
+            "Samples of 20–30 tablets were collected at defined points",
+            "during compression. Available measurements include weight",
+            "in milligrams, thickness in millimeters, and hardness",
+            "(tablet breaking force) in kiloponds."
+          ),
+          
+          p(
+            "The data come from the deidentified workbook",
+            "tablet_ipc_deidentified.xlsx supplied for this project.",
+            "The project README provides additional background",
+            "and descriptions of the variables."
+          ),
+          
+          p(
+            tags$a(
+              "View the dataset documentation on GitHub",
+              href = paste0(
+                "https://github.com/aliyahsheth01/",
+                "ST558_Project2#about-the-data"
+              ),
+              target = "_blank"
+            )
+          ),
+          
+          # I explain features of the data that matter when interpreting
+          # summaries and comparing the measurements.
+          h4("Understanding the measurements"),
+          
+          p(
+            "Not every record contains all three measurements.",
+            "The number of available readings can therefore differ",
+            "between weight, thickness, and hardness.",
+            "Compression dates were not recorded for Engineering Study 1."
+          ),
+          
+          p(
+            "Target hardness describes the intended setting rather than",
+            "the measured breaking force. Missing targets in the",
+            "Registration study are filled using preset values of",
+            "4 kp for Low strength and 7 kp for Mid and High strengths.",
+            "Existing target values are retained."
+          ),
+          
+          # I explain how users choose a subset and when those choices
+          # take effect.
+          h4("Using the sidebar"),
+          
+          p(
+            "Choose the studies and strengths to include.",
+            "Keep every checkbox selected to include all categories."
+          ),
+          
+          p(
+            "You can also select up to two numerical measurements",
+            "and adjust their lower and upper limits using the sliders.",
+            "Choose No numerical filter when you do not want",
+            "to restrict a measurement."
+          ),
+          
+          p(
+            "Click Apply Filters after making your selections.",
+            "The selected data and results update when this button",
+            "is pressed."
+          ),
+          
+          # I describe what users can find in each main tab.
+          h4("Using the tabs"),
+          
+          p(
+            strong("About: "),
+            "Learn about the dataset and how to use the app."
+          ),
+          
+          p(
+            strong("Data Download: "),
+            "Browse the selected records and download them as a CSV file."
+          ),
+          
+          p(
+            strong("Data Exploration: "),
+            "Create frequency tables, numerical summaries, and graphs.",
+            "Choose variables and available grouping, coloring,",
+            "or faceting options to explore the selected records."
           )
         ),
         
