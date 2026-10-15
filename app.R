@@ -46,6 +46,19 @@ tablet_data <- tablet_data |>
     )
   )
 
+# I list the measurements users can filter. The names on the
+# left appear in the app; the values on the right identify the
+# corresponding columns in the data.
+#
+# I also include an option to leave numerical values unrestricted.
+numeric_choices <- c(
+  "No numerical filter" = "none",
+  "Tablet weight (mg)" = "weight_mg",
+  "Tablet thickness (mm)" = "thickness_mm",
+  "Measured hardness (kp)" = "hardness_kp",
+  "Target hardness (kp)" = "target_hardness_kp"
+)
+
 # The user interface determines what someone sees when they open
 # the app. I start with a title and divide the page into a sidebar
 # for filters and a main panel for information and results.
@@ -81,6 +94,42 @@ ui <- fluidPage(
         label = "Tablet strength:",
         choices = levels(tablet_data$strength),
         selected = levels(tablet_data$strength)
+      ),
+    
+      # I let users choose a first numerical measurement to filter.
+      # Initially, no numerical restriction is applied.
+      selectInput(
+        inputId = "numeric_var1",
+        label = "First numerical filter:",
+        choices = numeric_choices,
+        selected = "none"
+      ),
+      
+      # I reserve a location for the range slider that the server
+      # will create for the first selected measurement.
+      uiOutput("numeric_range1_ui"),
+      
+      # A second selector allows users to restrict another measurement
+      # using its own range.
+      selectInput(
+        inputId = "numeric_var2",
+        label = "Second numerical filter:",
+        choices = numeric_choices,
+        selected = "none"
+      ),
+      
+      uiOutput("numeric_range2_ui"),
+      
+      # I provide a button so users can finish choosing their filters
+      # before applying them to the data.
+      helpText(
+        "After choosing your filters, click Apply Filters",
+        "to update the data and results."
+      ),
+      
+      actionButton(
+        inputId = "apply_filters",
+        label = "Apply filters"
       )
     ),
     
@@ -115,9 +164,60 @@ ui <- fluidPage(
 )
 
 
-# The server will contain the calculations that respond to user
-# selections. I leave it empty while I check the initial layout.
+# The server creates a range slider whenever a user selects a
+# numerical measurement. Each slider starts with the full range
+# of available values for that measurement.
 server <- function(input, output, session) {
+  
+  # I create the first slider after a measurement has been selected.
+  # Checking that the input exists also protects against errors
+  # while the app is first loading.
+  output$numeric_range1_ui <- renderUI({
+    
+    if (!is.null(input$numeric_var1) &&
+        input$numeric_var1 != "none") {
+      
+      # I retrieve the column selected in the first dropdown.
+      variable_values <- tablet_data[[input$numeric_var1]]
+      
+      # Some measurements are missing, so I exclude missing values
+      # when finding the smallest and largest available readings.
+      variable_range <- range(variable_values, na.rm = TRUE)
+      
+      # Supplying both endpoints as the starting value creates
+      # a slider with separate lower and upper handles.
+      sliderInput(
+        inputId = "numeric_range1",
+        label = "Include values between:",
+        min = variable_range[1],
+        max = variable_range[2],
+        value = variable_range,
+        step = 0.01
+      )
+    }
+  })
+  
+  
+  # I repeat the process for the second numerical filter.
+  # Its separate input names let users adjust it independently.
+  output$numeric_range2_ui <- renderUI({
+    
+    if (!is.null(input$numeric_var2) &&
+        input$numeric_var2 != "none") {
+      
+      variable_values <- tablet_data[[input$numeric_var2]]
+      variable_range <- range(variable_values, na.rm = TRUE)
+      
+      sliderInput(
+        inputId = "numeric_range2",
+        label = "Include values between:",
+        min = variable_range[1],
+        max = variable_range[2],
+        value = variable_range,
+        step = 0.01
+      )
+    }
+  })
   
 }
 
