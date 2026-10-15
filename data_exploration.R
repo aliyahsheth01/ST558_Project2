@@ -224,10 +224,8 @@ target_thickness_scatterplot <- ggplot(
 # I display the plot to examine thickness across the target settings.
 target_thickness_scatterplot
 
-# I compare relative thickness variability across target hardness
-# settings and strengths. For each combination, I calculate the
-# number of thickness readings, their mean, and standard deviation.
-# I then express the standard deviation as a percentage of the mean.
+# I compare relative thickness variability across target hardness settings and strengths. For each combination, I calculate the
+# number of thickness readings, their mean, and standard deviation. I then express the standard deviation as a percentage of the mean.
 thickness_rsd_data <- tablet_data |>
   filter(!is.na(thickness_mm)) |>
   group_by(strength, target_hardness_kp) |>
@@ -241,8 +239,7 @@ thickness_rsd_data <- tablet_data |>
     rsd_percent = 100 * sd_mm / mean_mm
   )
 
-# Each heatmap cell shows thickness RSD for one target hardness
-# and strength combination. Higher values indicate greater
+# Each heatmap cell shows thickness RSD for one target hardness and strength combination. Higher values indicate greater 
 # thickness variation relative to the mean thickness.
 thickness_rsd_heatmap <- ggplot(
   data = thickness_rsd_data,
