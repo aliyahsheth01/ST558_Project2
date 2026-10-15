@@ -51,3 +51,5 @@ The app will contain three main tabs: About, Data Download, and Data Exploration
 - `ST558_Project2.Rproj` opens the project in RStudio.
 - `data/tablet_ipc_deidentified.xlsx` contains the dataset and supporting worksheets.
 - `data_exploration.R` contains the static data exploration developed before building the app.
+- `app.R` contains the Shiny app, including data preparation, the interface, and dynamic numerical filter controls.
+- `www/tablet_press.jpg` contains the illustrative Natoli NP-255 tablet press image credited in the About tab.
