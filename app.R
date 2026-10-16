@@ -276,7 +276,12 @@ ui <- fluidPage(
         
         tabPanel(
           "Data Download",
-          h3("View and download the selected data")
+          
+          h3("View and download the selected data"),
+          
+          # I display the number of records in the applied dataset so
+          # users can see how much data their selections include.
+          textOutput("record_count")
         ),
         
         tabPanel(
@@ -293,6 +298,40 @@ ui <- fluidPage(
 # numerical measurement. Each slider starts with the full range
 # of available values for that measurement.
 server <- function(input, output, session) {
+  
+  # I store the applied dataset in a reactive object so that tables,
+  # downloads, and graphs can share the same selected records.
+  # When the app opens, I initially include the entire dataset.
+  selected_data <- reactiveValues(data = tablet_data)
+  
+  
+  # I update the stored dataset when Apply Filters is clicked.
+  # Changing a checkbox alone leaves the applied dataset unchanged.
+  observeEvent(input$apply_filters, {
+    
+    # I begin with the complete dataset each time. I keep records
+    # whose study AND strength belong to the selected categories.
+    filtered_data <- tablet_data |>
+      filter(
+        study %in% input$study_filter,
+        strength %in% input$strength_filter
+      )
+    
+    # I save the result for the app's outputs to use.
+    selected_data$data <- filtered_data
+  })
+  
+  
+  # I count the rows in the stored dataset. This output updates
+  # when a newly applied selection changes those records.
+  output$record_count <- renderText({
+    
+    paste(
+      "Records in the applied dataset:",
+      nrow(selected_data$data)
+    )
+    
+  })
   
   # I create the first slider after a measurement has been selected.
   # Checking that the input exists also protects against errors
