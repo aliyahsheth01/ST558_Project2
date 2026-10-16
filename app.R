@@ -279,9 +279,22 @@ ui <- fluidPage(
           
           h3("View and download the selected data"),
           
-          # I display the number of records in the applied dataset so
-          # users can see how much data their selections include.
-          textOutput("record_count")
+          p(
+            "Use the sidebar and Apply Filters to choose the records.",
+            "Use the table's search box and column headings to browse",
+            "and sort the applied dataset."
+          ),
+          
+          textOutput("record_count"),
+          
+          helpText(
+            "Numerical filters exclude records with missing values",
+            "for the selected measurement."
+          ),
+          
+          # I reserve a location for the interactive table that the
+          # server will create from the applied dataset.
+          DT::dataTableOutput("download_table")
         ),
         
         tabPanel(
@@ -375,6 +388,32 @@ server <- function(input, output, session) {
     paste(
       "Records in the applied dataset:",
       nrow(selected_data$data)
+    )
+    
+  })
+  
+  # I display the same applied dataset used by the record count.
+  # Because this output reads selected_data$data, it responds
+  # when Apply Filters saves a new selection.
+  output$download_table <- DT::renderDataTable({
+    
+    DT::datatable(
+      selected_data$data,
+      
+      # The data already contain tablet identifiers, so I hide
+      # the additional row numbers that DT would otherwise add.
+      rownames = FALSE,
+      
+      # Sidebar filters determine the dataset. Individual table
+      # rows do not need a separate selection control.
+      selection = "none",
+      
+      # I initially show ten records per page and allow horizontal
+      # scrolling so all seventeen columns remain accessible.
+      options = list(
+        pageLength = 10,
+        scrollX = TRUE
+      )
     )
     
   })
