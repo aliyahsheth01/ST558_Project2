@@ -305,20 +305,66 @@ server <- function(input, output, session) {
   selected_data <- reactiveValues(data = tablet_data)
   
   
-  # I update the stored dataset when Apply Filters is clicked.
-  # Changing a checkbox alone leaves the applied dataset unchanged.
+  # I apply the sidebar selections when Apply Filters is clicked.
+  # Each click starts with the complete dataset.
   observeEvent(input$apply_filters, {
     
-    # I begin with the complete dataset each time. I keep records
-    # whose study AND strength belong to the selected categories.
+    # I first keep records belonging to the selected studies
+    # and strengths.
     filtered_data <- tablet_data |>
       filter(
         study %in% input$study_filter,
         strength %in% input$strength_filter
       )
     
-    # I save the result for the app's outputs to use.
+    
+    # If a first numerical measurement is selected, I also require
+    # its value to fall within the chosen range.
+    if (input$numeric_var1 != "none") {
+      
+      # If the slider is still loading, I leave the previously
+      # applied dataset in place. The user can click again once
+      # the slider appears.
+      if (length(input$numeric_range1) != 2) {
+        return()
+      }
+      
+      measurement_values <- filtered_data[[input$numeric_var1]]
+      
+      # I exclude missing readings and include both endpoints
+      # of the selected range.
+      filtered_data <- filtered_data |>
+        filter(
+          !is.na(measurement_values),
+          measurement_values >= input$numeric_range1[1],
+          measurement_values <= input$numeric_range1[2]
+        )
+    }
+    
+    
+    # I apply the second numerical filter to the records that
+    # remain, so included records must satisfy both ranges.
+    if (input$numeric_var2 != "none") {
+      
+      if (length(input$numeric_range2) != 2) {
+        return()
+      }
+      
+      measurement_values <- filtered_data[[input$numeric_var2]]
+      
+      filtered_data <- filtered_data |>
+        filter(
+          !is.na(measurement_values),
+          measurement_values >= input$numeric_range2[1],
+          measurement_values <= input$numeric_range2[2]
+        )
+    }
+    
+    
+    # After applying every active filter, I store the resulting
+    # dataset for the record count and subsequent outputs.
     selected_data$data <- filtered_data
+    
   })
   
   
