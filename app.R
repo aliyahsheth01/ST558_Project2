@@ -292,6 +292,18 @@ ui <- fluidPage(
             "for the selected measurement."
           ),
           
+          # I provide a download of every record in the applied dataset.
+          downloadButton(
+            outputId = "download_data",
+            label = "Download applied data (CSV)"
+          ),
+          
+          helpText(
+            "The CSV includes all records selected by your last",
+            "Apply Filters click. Table search and paging affect",
+            "only the table display."
+          ),
+          
           # I reserve a location for the interactive table that the
           # server will create from the applied dataset.
           DT::dataTableOutput("download_table")
@@ -417,6 +429,34 @@ server <- function(input, output, session) {
     )
     
   })
+  
+  # I create a CSV file when the download button is clicked.
+  # The filename includes the download date to help identify it.
+  output$download_data <- downloadHandler(
+    
+    filename = function() {
+      paste0("tablet_data_", Sys.Date(), ".csv")
+    },
+    
+    # Shiny supplies a temporary file location. I write the applied
+    # dataset there, and Shiny sends that file to the user's browser.
+    content = function(file) {
+      
+      write.csv(
+        selected_data$data,
+        file = file,
+        
+        # I keep the original data columns without adding row numbers.
+        row.names = FALSE,
+        
+        # I represent missing measurements as blank cells.
+        na = ""
+      )
+      
+    },
+    
+    contentType = "text/csv"
+  )
   
   # I create the first slider after a measurement has been selected.
   # Checking that the input exists also protects against errors
