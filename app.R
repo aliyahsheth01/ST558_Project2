@@ -59,6 +59,20 @@ numeric_choices <- c(
   "Target hardness (kp)" = "target_hardness_kp"
 )
 
+# I list the categorical variables users can explore.
+# These choices include manufacturing details beyond the
+# study and strength filters available in the sidebar.
+categorical_choices <- c(
+  "Study" = "study",
+  "Tablet strength" = "strength",
+  "Manufacturing condition" = "condition",
+  "Sampling point" = "sampling_point",
+  "Equipment" = "equipment",
+  "Blend" = "blend",
+  "Compression lot" = "lot",
+  "Speed setting" = "speed_setting"
+)
+
 # The user interface determines what someone sees when they open
 # the app. I start with a title and divide the page into a sidebar
 # for filters and a main panel for information and results.
@@ -311,7 +325,64 @@ ui <- fluidPage(
         
         tabPanel(
           "Data Exploration",
-          h3("Explore the selected data")
+          
+          h3("Explore the selected data"),
+          
+          p(
+            "Summaries and graphs use the dataset from your most recent",
+            "Apply Filters click. Choose variables below to explore",
+            "those records."
+          ),
+          
+          # I organize exploration into categorical and numerical
+          # sections so users can find the appropriate summaries.
+          tabsetPanel(
+            id = "exploration_tabs",
+            
+            tabPanel(
+              "Categorical",
+              
+              # The first variable determines the categories counted
+              # in a one-way frequency table and simple bar chart.
+              selectInput(
+                inputId = "cat_var1",
+                label = "First categorical variable:",
+                choices = categorical_choices,
+                selected = "strength"
+              ),
+              
+              # An optional second variable allows users to examine
+              # combinations through a two-way table and grouped bars.
+              selectInput(
+                inputId = "cat_var2",
+                label = "Second categorical variable (optional):",
+                choices = c(
+                  "No second variable" = "none",
+                  categorical_choices
+                ),
+                selected = "none"
+              ),
+              
+              # I reserve locations for the frequency table and chart
+              # that the server will create from these selections.
+              h4("Frequency table"),
+              tableOutput("categorical_table"),
+              
+              h4("Bar chart"),
+              plotOutput("categorical_plot")
+            ),
+            
+            tabPanel(
+              "Numerical",
+              
+              h4("Numerical exploration"),
+              
+              p(
+                "Summarize measurements and explore their distributions",
+                "and relationships."
+              )
+            )
+          )
         )
       )
     )
