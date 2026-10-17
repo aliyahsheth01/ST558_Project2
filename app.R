@@ -529,6 +529,73 @@ server <- function(input, output, session) {
     contentType = "text/csv"
   )
   
+  # I create a frequency table using the records saved by
+  # the most recent Apply Filters click.
+  output$categorical_table <- renderTable({
+    
+    exploration_data <- selected_data$data
+    
+    # I display helpful instructions when the applied dataset
+    # is empty or the dropdown inputs are still loading.
+    validate(
+      need(
+        nrow(exploration_data) > 0,
+        "No records match your filters. Adjust the sidebar and click Apply Filters."
+      ),
+      need(
+        !is.null(input$cat_var1) && !is.null(input$cat_var2),
+        "Choose a categorical variable to begin."
+      )
+    )
+    
+    # I retrieve the readable label associated with the first
+    # selected column so the table has an informative heading.
+    first_label <- names(categorical_choices)[
+      categorical_choices == input$cat_var1
+    ]
+    
+    if (input$cat_var2 == "none") {
+      
+      # With one variable, I count the records in each category.
+      frequency_table <- as.data.frame(
+        table(exploration_data[[input$cat_var1]])
+      )
+      
+      names(frequency_table) <- c(first_label, "Records")
+      
+    } else {
+      
+      # A two-way table needs two different variables.
+      validate(
+        need(
+          input$cat_var1 != input$cat_var2,
+          "Choose a different second variable, or select No second variable."
+        )
+      )
+      
+      second_label <- names(categorical_choices)[
+        categorical_choices == input$cat_var2
+      ]
+      
+      # With two variables, I count each category combination.
+      frequency_table <- as.data.frame(
+        table(
+          exploration_data[[input$cat_var1]],
+          exploration_data[[input$cat_var2]]
+        )
+      )
+      
+      names(frequency_table) <- c(
+        first_label,
+        second_label,
+        "Records"
+      )
+    }
+    
+    frequency_table
+    
+  }, digits = 0, rownames = FALSE)
+  
   # I create the first slider after a measurement has been selected.
   # Checking that the input exists also protects against errors
   # while the app is first loading.
