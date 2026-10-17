@@ -7,6 +7,8 @@ library(shiny)
 library(readxl)
 library(dplyr)
 
+# I load ggplot2 to let me build bar charts for this app.
+library(ggplot2)
 
 # I read the tablet measurements from the data worksheet.
 # Each row represents one tablet record.
@@ -137,7 +139,7 @@ ui <- fluidPage(
       # I provide a button so users can finish choosing their filters
       # before applying them to the data.
       helpText(
-        "After choosing your filters, click Apply Filters",
+        "After choosing your filters, click Apply filters",
         "to update the data and results."
       ),
       
@@ -262,7 +264,7 @@ ui <- fluidPage(
           ),
           
           p(
-            "Click Apply Filters after making your selections.",
+            "Click Apply filters after making your selections.",
             "The selected data and results update when this button",
             "is pressed."
           ),
@@ -294,7 +296,7 @@ ui <- fluidPage(
           h3("View and download the selected data"),
           
           p(
-            "Use the sidebar and Apply Filters to choose the records.",
+            "Use the sidebar and Apply filters to choose the records.",
             "Use the table's search box and column headings to browse",
             "and sort the applied dataset."
           ),
@@ -314,7 +316,7 @@ ui <- fluidPage(
           
           helpText(
             "The CSV includes all records selected by your last",
-            "Apply Filters click. Table search and paging affect",
+            "Apply filters click. Table search and paging affect",
             "only the table display."
           ),
           
@@ -330,7 +332,7 @@ ui <- fluidPage(
           
           p(
             "Summaries and graphs use the dataset from your most recent",
-            "Apply Filters click. Choose variables below to explore",
+            "Apply filters click. Choose variables below to explore",
             "those records."
           ),
           
@@ -401,7 +403,7 @@ server <- function(input, output, session) {
   selected_data <- reactiveValues(data = tablet_data)
   
   
-  # I apply the sidebar selections when Apply Filters is clicked.
+  # I apply the sidebar selections when Apply filters is clicked.
   # Each click starts with the complete dataset.
   observeEvent(input$apply_filters, {
     
@@ -412,7 +414,6 @@ server <- function(input, output, session) {
         study %in% input$study_filter,
         strength %in% input$strength_filter
       )
-    
     
     # If a first numerical measurement is selected, I also require
     # its value to fall within the chosen range.
@@ -477,7 +478,7 @@ server <- function(input, output, session) {
   
   # I display the same applied dataset used by the record count.
   # Because this output reads selected_data$data, it responds
-  # when Apply Filters saves a new selection.
+  # when Apply filters saves a new selection.
   output$download_table <- DT::renderDataTable({
     
     DT::datatable(
@@ -530,7 +531,7 @@ server <- function(input, output, session) {
   )
   
   # I create a frequency table using the records saved by
-  # the most recent Apply Filters click.
+  # the most recent Apply filters click.
   output$categorical_table <- renderTable({
     
     exploration_data <- selected_data$data
@@ -540,7 +541,7 @@ server <- function(input, output, session) {
     validate(
       need(
         nrow(exploration_data) > 0,
-        "No records match your filters. Adjust the sidebar and click Apply Filters."
+        "No records match your filters. Adjust the sidebar and click Apply filters."
       ),
       need(
         !is.null(input$cat_var1) && !is.null(input$cat_var2),
@@ -595,6 +596,82 @@ server <- function(input, output, session) {
     frequency_table
     
   }, digits = 0, rownames = FALSE)
+  
+  # I create a bar chart from the applied dataset and the
+  # categorical variables selected in the exploration tab.
+  output$categorical_plot <- renderPlot({
+    
+    exploration_data <- selected_data$data
+    
+    # I provide instructions when there are no records to plot
+    # or the dropdown inputs are still loading.
+    validate(
+      need(
+        nrow(exploration_data) > 0,
+        "No records match your filters. Adjust the sidebar and click Apply filters."
+      ),
+      need(
+        !is.null(input$cat_var1) && !is.null(input$cat_var2),
+        "Choose a categorical variable to begin."
+      )
+    )
+    
+    first_label <- names(categorical_choices)[
+      categorical_choices == input$cat_var1
+    ]
+    
+    # I place the selected values into a plotting data frame.
+    # The fixed column name lets me use familiar aes() syntax
+    # regardless of which variable the user selects.
+    plot_data <- data.frame(
+      category1 = exploration_data[[input$cat_var1]]
+    )
+    
+    if (input$cat_var2 == "none") {
+      
+      # With one variable, each bar counts the records belonging
+      # to one category.
+      ggplot(data = plot_data, aes(x = category1)) +
+        geom_bar(fill = "steelblue") +
+        labs(
+          title = paste("Tablet Records by", first_label),
+          x = first_label,
+          y = "Number of records"
+        )
+      
+    } else {
+      
+      validate(
+        need(
+          input$cat_var1 != input$cat_var2,
+          "Choose a different second variable, or select No second variable."
+        )
+      )
+      
+      second_label <- names(categorical_choices)[
+        categorical_choices == input$cat_var2
+      ]
+      
+      # I add the second variable and use it to color the bars.
+      plot_data$category2 <- exploration_data[[input$cat_var2]]
+      
+      # Dodge places the colored groups beside one another.
+      ggplot(
+        data = plot_data,
+        aes(x = category1, fill = category2)
+      ) +
+        geom_bar(position = "dodge") +
+        labs(
+          title = paste(
+            "Tablet Records by", first_label, "and", second_label
+          ),
+          x = first_label,
+          y = "Number of records",
+          fill = second_label
+        )
+    }
+    
+  })
   
   # I create the first slider after a measurement has been selected.
   # Checking that the input exists also protects against errors
