@@ -17,7 +17,6 @@ tablet_data <- read_excel(
   sheet = "data"
 )
 
-
 # Before building the filters, I prepare the dates, identifiers,
 # category order, and target hardness values.
 tablet_data <- tablet_data |>
@@ -74,6 +73,11 @@ categorical_choices <- c(
   "Compression lot" = "lot",
   "Speed setting" = "speed_setting"
 )
+
+# I reuse the numerical choices already defined for the app.
+# I keep the measurement entries so every summary has a
+# numerical variable to work with.
+measurement_choices <- numeric_choices[numeric_choices != "none"]
 
 # The user interface determines what someone sees when they open
 # the app. I start with a title and divide the page into a sidebar
@@ -377,12 +381,99 @@ ui <- fluidPage(
             tabPanel(
               "Numerical",
               
-              h4("Numerical exploration"),
+              h4("Numerical summaries"),
               
               p(
-                "Summarize measurements and explore their distributions",
-                "and relationships."
-              )
+                "Choose a measurement and a grouping variable to summarize",
+                "the records from your most recent Apply filters click."
+              ),
+              
+              # I let users choose which numerical measurement to summarize.
+              # Weight is selected initially, matching our static exploration.
+              selectInput(
+                inputId = "num_var",
+                label = "Measurement:",
+                choices = measurement_choices,
+                selected = "weight_mg"
+              ),
+              
+              # I let users compare the measurement across categories.
+              # Strength is the initial grouping, but other manufacturing
+              # details are also available.
+              selectInput(
+                inputId = "num_group",
+                label = "Summarize by:",
+                choices = categorical_choices,
+                selected = "strength"
+              ),
+              
+              helpText(
+                "Summaries use the available readings for the selected",
+                "measurement. Counts can differ between measurements."
+              ),
+              
+              # I reserve a location for the reading count, mean, median,
+              # and standard deviation that the server will calculate.
+              tableOutput("numerical_summary"),
+              
+              h4("Graph"),
+              
+              helpText(
+                "Graphs use the measurement and grouping variable",
+                "selected above."
+              ),
+              
+              # I let users choose how they want to examine the measurement.
+              selectInput(
+                inputId = "num_plot_type",
+                label = "Graph type:",
+                choices = c(
+                  "Histogram" = "histogram",
+                  "Box plot" = "boxplot"
+                ),
+                selected = "histogram"
+              ),
+              
+              # I show histogram settings when Histogram is selected.
+              conditionalPanel(
+                condition = "input.num_plot_type == 'histogram'",
+                
+                sliderInput(
+                  inputId = "hist_bins",
+                  label = "Number of histogram bins:",
+                  min = 5,
+                  max = 60,
+                  value = 20,
+                  step = 1
+                ),
+                
+                # Separate panels let users compare distributions across
+                # the categories of their selected grouping variable.
+                checkboxInput(
+                  inputId = "hist_facet",
+                  label = "Show a separate histogram for each group",
+                  value = TRUE
+                )
+              ),
+              
+              # For box plots, I offer an optional second categorical
+              # variable to distinguish groups through color.
+              conditionalPanel(
+                condition = "input.num_plot_type == 'boxplot'",
+                
+                selectInput(
+                  inputId = "box_color",
+                  label = "Color box plots by:",
+                  choices = c(
+                    "No color grouping" = "none",
+                    categorical_choices
+                  ),
+                  selected = "study"
+                )
+              ),
+              
+              # I reserve a location for the selected graph.
+              plotOutput("numerical_plot", height = "450px")
             )
           )
         )
@@ -668,6 +759,217 @@ server <- function(input, output, session) {
           x = first_label,
           y = "Number of records",
           fill = second_label
+        )
+    }
+    
+  })
+  
+  # I summarize the measurement selected in the Numerical subtab,
+  # using the dataset saved by the most recent Apply Filters click.
+  output$numerical_summary <- renderTable({
+    
+    exploration_data <- selected_data$data
+    
+    validate(
+      need(
+        nrow(exploration_data) > 0,
+        "No records match your filters. Adjust the sidebar and click Apply Filters."
+      ),
+      need(
+        !is.null(input$num_var) && !is.null(input$num_group),
+        "Choose a measurement and grouping variable to begin."
+      )
+    )
+    
+    # I place the selected columns into a small data frame with
+    # consistent names, making the summary code easy to reuse.
+    summary_data <- data.frame(
+      group = exploration_data[[input$num_group]],
+      value = exploration_data[[input$num_var]]
+    )
+    
+    # I count available readings within each group and calculate
+    # their center and spread. Missing readings are excluded
+    # separately for the selected measurement.
+    summary_results <- summary_data |>
+      group_by(group) |>
+      summarize(
+        n_readings = sum(!is.na(value)),
+        
+        # A mean and median require at least one available reading.
+        mean_value = ifelse(
+          n_readings > 0,
+          mean(value, na.rm = TRUE),
+          NA
+        ),
+        
+        median_value = ifelse(
+          n_readings > 0,
+          median(value, na.rm = TRUE),
+          NA
+        ),
+        
+        # A sample standard deviation requires at least two readings.
+        sd_value = ifelse(
+          n_readings > 1,
+          sd(value, na.rm = TRUE),
+          NA
+        ),
+        
+        .groups = "drop"
+      )
+    
+    # I use the selected grouping variable's readable label
+    # as the first column heading.
+    group_label <- names(categorical_choices)[
+      categorical_choices == input$num_group
+    ]
+    
+    names(summary_results) <- c(
+      group_label,
+      "Readings",
+      "Mean",
+      "Median",
+      "SD"
+    )
+    
+    summary_results
+    
+  }, digits = 3, rownames = FALSE, na = "Not available")
+  
+  # I create the numerical graph using the applied dataset and
+  # the measurement and grouping selections above the summary.
+  output$numerical_plot <- renderPlot({
+    
+    exploration_data <- selected_data$data
+    
+    validate(
+      need(
+        nrow(exploration_data) > 0,
+        "No records match your filters. Adjust the sidebar and click Apply Filters."
+      ),
+      need(
+        !is.null(input$num_var) &&
+          !is.null(input$num_group) &&
+          !is.null(input$num_plot_type),
+        "Choose a measurement, grouping variable, and graph type."
+      )
+    )
+    
+    # I add consistently named plotting columns and keep records
+    # with an available reading for the selected measurement.
+    plot_data <- exploration_data |>
+      mutate(
+        value = exploration_data[[input$num_var]],
+        group = exploration_data[[input$num_group]]
+      ) |>
+      filter(!is.na(value))
+    
+    # A selected dataset can contain records but no readings
+    # for a particular measurement, so I check that separately.
+    validate(
+      need(
+        nrow(plot_data) > 0,
+        "No readings are available for this measurement. Choose another measurement or adjust your filters."
+      )
+    )
+    
+    # I retrieve readable labels for the graph's title and axes.
+    measurement_label <- names(measurement_choices)[
+      measurement_choices == input$num_var
+    ]
+    
+    group_label <- names(categorical_choices)[
+      categorical_choices == input$num_group
+    ]
+    
+    if (input$num_plot_type == "histogram") {
+      
+      validate(
+        need(
+          !is.null(input$hist_bins) && !is.null(input$hist_facet),
+          "Choose the histogram settings."
+        )
+      )
+      
+      # The slider controls the number of bins used to display
+      # the distribution of the selected measurement.
+      histogram_plot <- ggplot(
+        data = plot_data,
+        aes(x = value)
+      ) +
+        geom_histogram(
+          bins = input$hist_bins,
+          fill = "steelblue",
+          color = "white"
+        ) +
+        labs(
+          title = paste("Distribution of", measurement_label),
+          x = measurement_label,
+          y = "Number of readings"
+        )
+      
+      # When requested, I create a panel for each group.
+      # Separate x-axis ranges make distributions at different
+      # measurement levels easier to examine.
+      if (input$hist_facet) {
+        
+        histogram_plot <- histogram_plot +
+          facet_wrap(~group, scales = "free_x") +
+          labs(
+            subtitle = paste("Separate panels by", group_label),
+            caption = "Each panel uses its own x-axis range."
+          )
+      }
+      
+      histogram_plot
+      
+    } else if (input$num_plot_type == "boxplot") {
+      
+      validate(
+        need(
+          !is.null(input$box_color),
+          "Choose a color grouping for the box plot."
+        )
+      )
+      
+      # I place the selected groups along the horizontal axis
+      # and the measurement on the vertical axis. When no color
+      # grouping is selected, I give all boxes the same color.
+      if (input$box_color == "none") {
+        
+        box_plot <- ggplot(
+          data = plot_data,
+          aes(x = group, y = value)
+        ) +
+          geom_boxplot(fill = "steelblue")
+        
+      } else {
+        
+        # When a color grouping is selected, I retrieve that
+        # variable from the records with available measurements.
+        # This lets me compare subgroups within each main group.
+        plot_data$color_group <- plot_data[[input$box_color]]
+        
+        color_label <- names(categorical_choices)[
+          categorical_choices == input$box_color
+        ]
+        
+        box_plot <- ggplot(
+          data = plot_data,
+          aes(x = group, y = value, fill = color_group)
+        ) +
+          geom_boxplot() +
+          labs(fill = color_label)
+      }
+      
+      # I finish the graph with labels that reflect the user's
+      # selections, including the measurement's units.
+      box_plot +
+        labs(
+          title = paste(measurement_label, "by", group_label),
+          x = group_label,
+          y = measurement_label
         )
     }
     
