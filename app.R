@@ -472,8 +472,133 @@ ui <- fluidPage(
                 )
               ),
               
-              # I reserve a location for the selected graph.
               plotOutput("numerical_plot", height = "450px")
+            ),
+            
+            # I give comparisons between numerical variables their own tab.
+            # Users can choose both measurements and then add color or
+            # separate panels to explore differences between groups.
+            tabPanel(
+              "Relationships",
+              
+              h4("Compare two numerical variables"),
+              
+              p(
+                "Choose measurements for the horizontal and vertical axes.",
+                "The graph uses records from your most recent Apply Filters click."
+              ),
+              
+              # I start with target hardness on the horizontal axis and
+              # thickness on the vertical axis, matching the comparison
+              # I explored earlier in the static analysis.
+              selectInput(
+                inputId = "scatter_x",
+                label = "Horizontal axis:",
+                choices = measurement_choices,
+                selected = "target_hardness_kp"
+              ),
+              
+              selectInput(
+                inputId = "scatter_y",
+                label = "Vertical axis:",
+                choices = measurement_choices,
+                selected = "thickness_mm"
+              ),
+              
+              # Color helps distinguish groups within the same graph.
+              # I begin with strength, but users can choose another
+              # category or display all points in one color.
+              selectInput(
+                inputId = "scatter_color",
+                label = "Color points by:",
+                choices = c(
+                  "No color grouping" = "none",
+                  categorical_choices
+                ),
+                selected = "strength"
+              ),
+              
+              # Separate panels provide another way to compare groups.
+              # I leave this optional so the initial graph stays simple.
+              selectInput(
+                inputId = "scatter_facet",
+                label = "Create separate panels by:",
+                choices = c(
+                  "No separate panels" = "none",
+                  categorical_choices
+                ),
+                selected = "none"
+              ),
+              
+              helpText(
+                "Only records with readings for both selected measurements",
+                "will appear in the graph."
+              ),
+              
+              plotOutput("scatter_plot", height = "450px")
+            ),
+            
+            # I use a heatmap to compare relative variability across
+            # combinations of manufacturing settings and tablet groups.
+            tabPanel(
+              "Variability",
+              
+              h4("Compare relative variability"),
+              
+              p(
+                "Relative standard deviation (RSD) expresses the standard",
+                "deviation as a percentage of the mean:",
+                "RSD = 100 × SD / mean."
+              ),
+              
+              # I begin with thickness, matching my static exploration.
+              # Users can also examine variability in weight or hardness.
+              # Target hardness is a preset rather than a tablet measurement,
+              # so I leave it out of the measurements summarized here.
+              selectInput(
+                inputId = "heatmap_measure",
+                label = "Measurement for RSD:",
+                choices = measurement_choices[
+                  measurement_choices != "target_hardness_kp"
+                ],
+                selected = "thickness_mm"
+              ),
+              
+              # I treat each horizontal-axis value as a separate group.
+              # Target hardness is the default, but users can also select
+              # one of the categorical variables.
+              selectInput(
+                inputId = "heatmap_x",
+                label = "Horizontal grouping:",
+                choices = c(
+                  "Target hardness (kp)" = "target_hardness_kp",
+                  categorical_choices
+                ),
+                selected = "target_hardness_kp"
+              ),
+              
+              # Each row represents a level of the selected category.
+              # Strength is the starting choice for comparison with
+              # the heatmap developed in my static exploration.
+              selectInput(
+                inputId = "heatmap_y",
+                label = "Vertical grouping:",
+                choices = categorical_choices,
+                selected = "strength"
+              ),
+              
+              helpText(
+                "The heatmap uses your applied dataset.",
+                "Each cell summarizes the available readings for that",
+                "combination of horizontal and vertical groups."
+              ),
+              
+              helpText(
+                "When a cell includes several lots or studies,",
+                "its RSD pools those readings."
+              ),
+              
+              plotOutput("heatmap_plot", height = "450px")
             )
           )
         )
@@ -972,6 +1097,121 @@ server <- function(input, output, session) {
           y = measurement_label
         )
     }
+    
+  })
+  
+  # I build the scatter plot from the applied dataset so that
+  # it follows the same sidebar selections as the other outputs.
+  output$scatter_plot <- renderPlot({
+    
+    exploration_data <- selected_data$data
+    
+    validate(
+      need(
+        nrow(exploration_data) > 0,
+        "No records match your filters. Adjust the sidebar and click Apply Filters."
+      ),
+      need(
+        !is.null(input$scatter_x) &&
+          !is.null(input$scatter_y) &&
+          !is.null(input$scatter_color) &&
+          !is.null(input$scatter_facet),
+        "Choose the scatter plot settings."
+      )
+    )
+    
+    # Each point needs both measurements from the same tablet
+    # record. I keep only records where both readings are available.
+    plot_data <- exploration_data |>
+      mutate(
+        x_value = exploration_data[[input$scatter_x]],
+        y_value = exploration_data[[input$scatter_y]]
+      ) |>
+      filter(
+        !is.na(x_value),
+        !is.na(y_value)
+      )
+    
+    validate(
+      need(
+        nrow(plot_data) > 0,
+        paste(
+          "No records have readings for both selected measurements.",
+          "Choose different measurements or adjust your filters."
+        )
+      )
+    )
+    
+    # I prepare the optional grouping columns before building
+    # the graph. These columns come from the same retained records.
+    if (input$scatter_color != "none") {
+      plot_data$color_group <- plot_data[[input$scatter_color]]
+    }
+    
+    if (input$scatter_facet != "none") {
+      plot_data$facet_group <- plot_data[[input$scatter_facet]]
+    }
+    
+    # I retrieve readable axis labels, including the units,
+    # from the measurement choices defined earlier.
+    x_label <- names(measurement_choices)[
+      measurement_choices == input$scatter_x
+    ]
+    
+    y_label <- names(measurement_choices)[
+      measurement_choices == input$scatter_y
+    ]
+    
+    scatter_plot <- ggplot(
+      data = plot_data,
+      aes(x = x_value, y = y_value)
+    )
+    
+    # I use partially transparent points to make overlapping
+    # readings easier to see. Color grouping remains optional.
+    if (input$scatter_color == "none") {
+      
+      scatter_plot <- scatter_plot +
+        geom_point(color = "steelblue", alpha = 0.5)
+      
+    } else {
+      
+      color_label <- names(categorical_choices)[
+        categorical_choices == input$scatter_color
+      ]
+      
+      scatter_plot <- scatter_plot +
+        geom_point(aes(color = color_group), alpha = 0.5) +
+        labs(color = color_label)
+    }
+    
+    # When requested, I separate the groups into panels.
+    # The panels share axis scales to support direct comparisons.
+    if (input$scatter_facet != "none") {
+      
+      facet_label <- names(categorical_choices)[
+        categorical_choices == input$scatter_facet
+      ]
+      
+      scatter_plot <- scatter_plot +
+        facet_wrap(~facet_group) +
+        labs(
+          subtitle = paste("Separate panels by", facet_label)
+        )
+    }
+    
+    # I finish with descriptive labels and the number of records
+    # that have both measurements available for this comparison.
+    scatter_plot +
+      labs(
+        title = paste(y_label, "versus", x_label),
+        x = x_label,
+        y = y_label,
+        caption = paste(
+          "Records with both measurements:",
+          nrow(plot_data)
+        )
+      )
     
   })
   
