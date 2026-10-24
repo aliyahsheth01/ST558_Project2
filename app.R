@@ -1215,6 +1215,142 @@ server <- function(input, output, session) {
     
   })
   
+  # I calculate relative variability using the applied dataset.
+  # Each heatmap cell represents one combination of the two
+  # grouping variables selected in the Variability tab.
+  output$heatmap_plot <- renderPlot({
+    
+    exploration_data <- selected_data$data
+    
+    validate(
+      need(
+        nrow(exploration_data) > 0,
+        "No records match your filters. Adjust the sidebar and click Apply Filters."
+      ),
+      need(
+        !is.null(input$heatmap_measure) &&
+          !is.null(input$heatmap_x) &&
+          !is.null(input$heatmap_y),
+        "Choose a measurement and both grouping variables."
+      )
+    )
+    
+    validate(
+      need(
+        input$heatmap_x != input$heatmap_y,
+        "Choose different horizontal and vertical grouping variables."
+      )
+    )
+    
+    # I give the selected columns consistent names for the
+    # calculations below. Factors treat each grouping value
+    # as a separate category, including each target hardness.
+    summary_data <- data.frame(
+      x_group = factor(exploration_data[[input$heatmap_x]]),
+      y_group = factor(exploration_data[[input$heatmap_y]]),
+      value = exploration_data[[input$heatmap_measure]]
+    )
+    
+    # I count the available readings within each combination.
+    # Keeping groups with missing readings lets the graph
+    # distinguish unavailable RSD values from absent combinations.
+    heatmap_data <- summary_data |>
+      group_by(x_group, y_group) |>
+      summarize(
+        n_readings = sum(!is.na(value)),
+        
+        mean_value = ifelse(
+          n_readings > 0,
+          mean(value, na.rm = TRUE),
+          NA_real_
+        ),
+        
+        sd_value = ifelse(
+          n_readings > 1,
+          sd(value, na.rm = TRUE),
+          NA_real_
+        ),
+        
+        .groups = "drop"
+      ) |>
+      mutate(
+        rsd_percent = ifelse(
+          n_readings > 1 &
+            !is.na(mean_value) &
+            mean_value != 0,
+          100 * sd_value / mean_value,
+          NA_real_
+        )
+      )
+    
+    # RSD requires at least two available readings and a
+    # nonzero mean. If no cells meet these conditions, I
+    # explain why the graph cannot be displayed.
+    validate(
+      need(
+        any(!is.na(heatmap_data$rsd_percent)),
+        paste(
+          "RSD cannot be calculated for this selection.",
+          "Each cell needs at least two available readings",
+          "and a nonzero mean."
+        )
+      )
+    )
+    
+    # I retrieve descriptive labels from the same choices
+    # used in the controls, keeping the graph easy to interpret.
+    measurement_label <- names(measurement_choices)[
+      measurement_choices == input$heatmap_measure
+    ]
+    
+    horizontal_choices <- c(
+      "Target hardness (kp)" = "target_hardness_kp",
+      categorical_choices
+    )
+    
+    x_label <- names(horizontal_choices)[
+      horizontal_choices == input$heatmap_x
+    ]
+    
+    y_label <- names(categorical_choices)[
+      categorical_choices == input$heatmap_y
+    ]
+    
+    # Each tile displays the RSD for its combination.
+    # Darker blue indicates a higher RSD, while gray identifies
+    # combinations whose records do not support an RSD calculation.
+    ggplot(
+      data = heatmap_data,
+      aes(
+        x = x_group,
+        y = y_group,
+        fill = rsd_percent
+      )
+    ) +
+      geom_tile(color = "white") +
+      scale_fill_gradient(
+        low = "lightblue",
+        high = "navy",
+        na.value = "grey80"
+      ) +
+      labs(
+        title = paste("RSD for", measurement_label),
+        subtitle = paste("Grouped by", x_label, "and", y_label),
+        x = x_label,
+        y = y_label,
+        fill = "RSD (%)",
+        caption = paste(
+          "RSD pools readings across the lots and studies represented in each cell.",
+          "Gray: RSD unavailable. Blank: no records for that combination.",
+          sep = "\n"
+        )
+      ) +
+      theme(
+        axis.text.x = element_text(angle = 45, hjust = 1)
+      )
+    
+  })
+  
   # I create the first slider after a measurement has been selected.
   # Checking that the input exists also protects against errors
   # while the app is first loading.
