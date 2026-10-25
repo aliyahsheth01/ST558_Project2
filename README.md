@@ -36,20 +36,35 @@ During data preparation, missing target hardness values for registration records
 
 ## App features
 
-The app allows users to:
+The app contains three main tabs:
 
-- Filter the data by categorical variables and numerical ranges.
-- Apply their filter selections using a button.
-- Browse and download the selected records.
-- Create frequency tables and numerical summaries.
-- Explore relationships through graphs, with choices for variables, grouping, coloring, and faceting.
+- **About** introduces the dataset, explains the measurements, and describes how to use the app.
+- **Data Download** provides a searchable, sortable data table and a CSV download of the applied dataset.
+- **Data Exploration** provides interactive summaries and graphs through four subtabs:
+  - **Categorical:** one-way and two-way frequency tables and bar charts.
+  - **Numerical:** grouped counts, means, medians, and standard deviations, plus histograms and box plots.
+  - **Relationships:** scatter plots with selectable measurements, color grouping, and optional faceting.
+  - **Variability:** RSD heatmaps with selectable measurements and grouping variables.
 
-The app will contain three main tabs: About, Data Download, and Data Exploration.
+The sidebar includes study and strength selections and two optional numerical range filters. Clicking **Apply Filters** updates the dataset used throughout the app. Graph controls update the selected graph using that applied dataset.
+
+The CSV download includes the full applied dataset. Searching or paging within the displayed table affects only the table display.
+
+RSD is calculated as 100 × standard deviation / mean. Each heatmap cell summarizes the available readings within its selected group combination and may pool measurements across lots and studies.
+
+## Running the app locally
+
+1. Clone or download this repository.
+2. Open `ST558_Project2.Rproj` in RStudio.
+3. Install the required packages in the R Console if they are not already installed:
+
+   ```r
+   install.packages(c("shiny", "readxl", "dplyr", "ggplot2", "DT"))
 
 ## Repository files
 
 - `ST558_Project2.Rproj` opens the project in RStudio.
 - `data/tablet_ipc_deidentified.xlsx` contains the dataset and supporting worksheets.
 - `data_exploration.R` contains the static data exploration developed before building the app.
-- `app.R` contains the Shiny app, including data preparation, the interface, and dynamic numerical filter controls.
-- `www/tablet_press.jpg` contains the illustrative Natoli NP-255 tablet press image credited in the About tab.
+- `app.R` contains the Shiny app's interface, data preparation, and server logic.
+- `www/tablet_press.jpg` contains the tablet press image displayed on the About tab.

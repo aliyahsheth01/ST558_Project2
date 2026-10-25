@@ -480,20 +480,54 @@ weight and thickness, and some also contain hardness. Most manual
 records contain hardness only, although some include all three
 measurements. Missing values will be handled separately for each summary
 or graph.</p>
+<p>During data preparation, missing target hardness values for
+registration records are filled using the preset targets: 4 kp for Low
+strength and 7 kp for Mid and High strengths. Existing target values are
+retained. Compression dates are also converted to R’s Date class. These
+preparation steps are applied to the imported data in R; the Excel
+source retains its original contents.</p>
 </div>
 <div id="app-features" class="section level2">
 <h2>App features</h2>
-<p>The app allows users to:</p>
+<p>The app contains three main tabs:</p>
 <ul>
-<li>Filter the data by categorical variables and numerical ranges.</li>
-<li>Apply their filter selections using a button.</li>
-<li>Browse and download the selected records.</li>
-<li>Create frequency tables and numerical summaries.</li>
-<li>Explore relationships through graphs, with choices for variables,
-grouping, coloring, and faceting.</li>
+<li><strong>About</strong> introduces the dataset, explains the
+measurements, and describes how to use the app.</li>
+<li><strong>Data Download</strong> provides a searchable, sortable data
+table and a CSV download of the applied dataset.</li>
+<li><strong>Data Exploration</strong> provides interactive summaries and
+graphs through four subtabs:
+<ul>
+<li><strong>Categorical:</strong> one-way and two-way frequency tables
+and bar charts.</li>
+<li><strong>Numerical:</strong> grouped counts, means, medians, and
+standard deviations, plus histograms and box plots.</li>
+<li><strong>Relationships:</strong> scatter plots with selectable
+measurements, color grouping, and optional faceting.</li>
+<li><strong>Variability:</strong> RSD heatmaps with selectable
+measurements and grouping variables.</li>
+</ul></li>
 </ul>
-<p>The app will contain three main tabs: About, Data Download, and Data
-Exploration.</p>
+<p>The sidebar includes study and strength selections and two optional
+numerical range filters. Clicking <strong>Apply Filters</strong> updates
+the dataset used throughout the app. Graph controls update the selected
+graph using that applied dataset.</p>
+<p>The CSV download includes the full applied dataset. Searching or
+paging within the displayed table affects only the table display.</p>
+<p>RSD is calculated as 100 × standard deviation / mean. Each heatmap
+cell summarizes the available readings within its selected group
+combination and may pool measurements across lots and studies.</p>
+</div>
+<div id="running-the-app-locally" class="section level2">
+<h2>Running the app locally</h2>
+<ol style="list-style-type: decimal">
+<li><p>Clone or download this repository.</p></li>
+<li><p>Open <code>ST558_Project2.Rproj</code> in RStudio.</p></li>
+<li><p>Install the required packages in the R Console if they are not
+already installed:</p>
+<p>```r install.packages(c(“shiny”, “readxl”, “dplyr”, “ggplot2”,
+“DT”))</p></li>
+</ol>
 </div>
 <div id="repository-files" class="section level2">
 <h2>Repository files</h2>
@@ -503,6 +537,10 @@ Exploration.</p>
 and supporting worksheets.</li>
 <li><code>data_exploration.R</code> contains the static data exploration
 developed before building the app.</li>
+<li><code>app.R</code> contains the Shiny app’s interface, data
+preparation, and server logic.</li>
+<li><code>www/tablet_press.jpg</code> contains the tablet press image
+displayed on the About tab.</li>
 </ul>
 </div>
 </div>
