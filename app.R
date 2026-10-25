@@ -7,7 +7,8 @@ library(shiny)
 library(readxl)
 library(dplyr)
 
-# I load ggplot2 to let me build bar charts for this app.
+# I load ggplot2 to build the app's bar charts, histograms,
+# box plots, scatter plots, and RSD heatmaps.
 library(ggplot2)
 
 # I read the tablet measurements from the data worksheet.
@@ -174,9 +175,6 @@ ui <- fluidPage(
             "strengths, and manufacturing conditions."
           ),
           
-          # I describe what each record represents and identify the
-          # workbook that supplies the data.
-          
           # I include an example of a rotary tablet press to connect the
           # measurements with the compression process. I credit Natoli
           # and provide a link to the equipment's product page.
@@ -197,6 +195,9 @@ ui <- fluidPage(
               target = "_blank"
             )
           ),
+          
+          # I describe what each record represents and identify the
+          # workbook that supplies the data.
           
           h4("About the data"),
           
@@ -340,8 +341,9 @@ ui <- fluidPage(
             "those records."
           ),
           
-          # I organize exploration into categorical and numerical
-          # sections so users can find the appropriate summaries.
+          # I organize exploration into four sections: categorical
+          # summaries, numerical summaries, relationships between
+          # measurements, and relative variability.
           tabsetPanel(
             id = "exploration_tabs",
             
@@ -389,7 +391,7 @@ ui <- fluidPage(
               ),
               
               # I let users choose which numerical measurement to summarize.
-              # Weight is selected initially, matching our static exploration.
+              # I start with weight to match my static exploration.
               selectInput(
                 inputId = "num_var",
                 label = "Measurement:",
@@ -608,9 +610,12 @@ ui <- fluidPage(
 )
 
 
-# The server creates a range slider whenever a user selects a
-# numerical measurement. Each slider starts with the full range
-# of available values for that measurement.
+# The server controls how the app responds to user selections.
+# I create the numerical range sliders, apply sidebar filters
+# when the button is clicked, and use the stored dataset for
+# tables, downloads, summaries, and graphs.
+
+# Graph controls update their views using the applied dataset.
 server <- function(input, output, session) {
   
   # I store the applied dataset in a reactive object so that tables,
@@ -734,10 +739,12 @@ server <- function(input, output, session) {
         selected_data$data,
         file = file,
         
-        # I keep the original data columns without adding row numbers.
+        # I export the prepared dataset's columns without adding
+        # an extra column of row numbers.
         row.names = FALSE,
         
-        # I represent missing measurements as blank cells.
+        # I write missing values, including unrecorded dates and
+        # unavailable measurements, as blank cells in the CSV.
         na = ""
       )
       
