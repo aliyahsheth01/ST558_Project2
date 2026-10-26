@@ -58,8 +58,7 @@ RSD is calculated as 100 × standard deviation / mean. Each heatmap cell summari
 2. Open `ST558_Project2.Rproj` in RStudio.
 3. Install the required packages in the R Console if they are not already installed:
 
-   ```r
-   install.packages(c("shiny", "readxl", "dplyr", "ggplot2", "DT"))
+   install.packages(c("shiny", "readxl", "dplyr", "ggplot2", "DT", "shinycssloaders"))
 
 ## Repository files
 

@@ -377,7 +377,10 @@ ui <- fluidPage(
               tableOutput("categorical_table"),
               
               h4("Bar chart"),
-              plotOutput("categorical_plot")
+              # I show a loading indicator while the bar chart is calculated.
+              shinycssloaders::withSpinner(
+                plotOutput("categorical_plot")
+              )
             ),
             
             tabPanel(
@@ -474,7 +477,11 @@ ui <- fluidPage(
                 )
               ),
               
-              plotOutput("numerical_plot", height = "450px")
+              # I show a loading indicator while the selected histogram
+              # or box plot is calculated.
+              shinycssloaders::withSpinner(
+                plotOutput("numerical_plot", height = "450px")
+              )
             ),
             
             # I give comparisons between numerical variables their own tab.
@@ -537,7 +544,10 @@ ui <- fluidPage(
                 "will appear in the graph."
               ),
               
-              plotOutput("scatter_plot", height = "450px")
+              # I show a loading indicator while the scatter plot is calculated.
+              shinycssloaders::withSpinner(
+                plotOutput("scatter_plot", height = "450px")
+              )
             ),
             
             # I use a heatmap to compare relative variability across
@@ -600,7 +610,11 @@ ui <- fluidPage(
                 "its RSD pools those readings."
               ),
               
-              plotOutput("heatmap_plot", height = "450px")
+              # I show a loading indicator while the grouped RSD values
+              # are calculated and displayed in the heatmap.
+              shinycssloaders::withSpinner(
+                plotOutput("heatmap_plot", height = "450px")
+              )
             )
           )
         )
