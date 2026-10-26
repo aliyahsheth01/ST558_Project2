@@ -2,7 +2,7 @@
 
 This project is being developed for ST 558 Project 2. Its purpose is to create a Shiny app that helps users explore tablet manufacturing data and understand how tablet weight, thickness, and hardness vary across studies, strengths, and manufacturing conditions.
 
-Deployed app: Not yet deployed.
+Deployed app: [Tablet In-Process Data Explorer](https://asheth26.shinyapps.io/ST558_Project2/)
 
 Static exploration: [data_exploration.R](data_exploration.R)
 

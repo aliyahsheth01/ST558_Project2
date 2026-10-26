@@ -1,0 +1,13 @@
+name: ST558_Project2
+title: ST558_Project2
+username: asheth26
+account: asheth26
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 18277894
+bundleId: 12739741
+url: https://asheth26.shinyapps.io/ST558_Project2/
+version: 1
+asMultiple: FALSE
+asStatic: FALSE
+ignoredFiles: .RData|data_exploration.R|LICENSE|README.html|README.md
