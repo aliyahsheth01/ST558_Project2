@@ -54,7 +54,7 @@ names(tablet_data)
 str(tablet_data)
 
 # I also want to know where measurements are missing. R represents missing values as NA, and this command counts them in each column.
-# The is.na() part identifies missing values, and colSums() adds up those results separately for each column.These counts will help me 
+# The is.na() part identifies missing values, and colSums() adds up those results separately for each column. These counts will help me 
 # plan the summaries and graphs. A row without a hardness measurement may still have a weight measurement, so I will consider missing 
 # values separately for each analysis.
 colSums(is.na(tablet_data))
@@ -89,14 +89,13 @@ weight_summary <- tablet_data |>
     sd_mg = sd(weight_mg, na.rm = TRUE)
   )
 
-# I display the results to examine the typical weight and the amount of variation within each strength. All weight summaries
-# are expressed in milligrams.
+# I display the results to examine typical weight and its variability within each strength. The mean, median, and
+# standard deviation are in milligrams; n_weight counts readings.
 weight_summary
 
-# I now summarize tablet hardness, which measures the force needed to break a tablet and is expressed here in kiloponds (kp).
-# For each strength, I count the available hardness measurements and calculate their mean, median, and standard deviation.
-# These summaries combine the studies and conditions within each strength. Later tables and graphs will help me explore how
-# hardness differs across those manufacturing conditions.
+# I now summarize hardness, the force needed to break a tablet, expressed here in kiloponds (kp). Within each strength, I count
+# available readings and calculate their mean, median, and SD. These summaries combine studies and manufacturing conditions.
+# The box plot below compares hardness across studies within each strength.
 hardness_summary <- tablet_data |>
   group_by(strength) |>
   summarize(
@@ -141,8 +140,8 @@ study_barplot <- ggplot(
 # I display the saved plot in RStudio's Plots pane.
 study_barplot
 
-# Next, I break each study's record count down by tablet strength.Showing the strengths side by side lets me compare how many
-# records are available for Low, Mid, and High within each study.Mapping strength to fill gives each strength a different color.
+# Next, I break each study's record count down by tablet strength. Showing the strengths side by side lets me compare how many
+# records are available for Low, Mid, and High within each study. Mapping strength to fill gives each strength a different color.
 # The dodge position places those colored bars beside one another.
 study_strength_barplot <- ggplot(
   data = tablet_data,
@@ -160,7 +159,7 @@ study_strength_barplot <- ggplot(
 study_strength_barplot
 
 # I now explore the distribution of tablet weight within each strength. A histogram groups weights into intervals and shows
-# how many records fall within each interval.I use intervals that are 1 mg wide and create a separate panel
+# how many records fall within each interval. I use intervals that are 1 mg wide and create a separate panel
 # for each strength. Each panel has its own horizontal range so the weight distribution for that strength is easy to examine.
 weight_histogram <- ggplot(
   data = tablet_data,

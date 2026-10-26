@@ -8,7 +8,7 @@ Static exploration: [data_exploration.R](data_exploration.R)
 
 ## About the data
 
-`data/tablet_ipc_deidentified.xlsx` contains 4,850 individual tablet measurements from 52 compression lots of an immediate-release tablet product under development, made in three strengths (Low, Mid, High) across two engineering studies and one registration batch campaign. During each lot, samples of 20–30 tablets were pulled at defined points in the run (pre-start, beginning, middle, end) and each tablet was measured for weight, thickness, and breaking force (hardness), either on an bulk automated tablet tester or by individual hardness tester
+`data/tablet_ipc_deidentified.xlsx` contains 4,850 tablet-level records from 52 compression lots of an immediate-release tablet product under development. The data cover three strengths (Low, Mid, High), two engineering studies, and one registration batch campaign. Samples of 20–30 tablets were collected at defined points during compression. Available measurements include weight, thickness, and breaking force (hardness), with measurement availability varying across records.
 
 | Column | Type | Description |
 |---|---|---|
@@ -24,7 +24,7 @@ Static exploration: [data_exploration.R](data_exploration.R)
 | `sampling_detail` | categorical (10) | Original sampling label before grouping |
 | `equipment` | categorical (2) | AT4 (automated tester) or Manual (individual tablet hardness tester) |
 | `sample_id` | text | One IPC pull of 20–30 tablets (lot–point–equipment) |
-| `tablet_no` | integer | Tablet number within the sample |
+| `tablet_no` | text | Tablet number within the sample; stored as character in R |
 | `weight_mg` | numeric | Individual tablet weight, mg |
 | `thickness_mm` | numeric | Tablet thickness, mm |
 | `hardness_kp` | numeric | Tablet breaking force, kp |
@@ -58,7 +58,15 @@ RSD is calculated as 100 × standard deviation / mean. Each heatmap cell summari
 2. Open `ST558_Project2.Rproj` in RStudio.
 3. Install the required packages in the R Console if they are not already installed:
 
-   install.packages(c("shiny", "readxl", "dplyr", "ggplot2", "DT", "shinycssloaders"))
+   ```r
+   install.packages(c(
+     "shiny", "readxl", "dplyr", "ggplot2", "DT", "shinycssloaders"
+   ))
+   ```
+
+4. Open `app.R` and click **Run App**.
+
+Keep the `data` and `www` folders in the project directory so the app can locate the workbook and tablet press image.
 
 ## Repository files
 

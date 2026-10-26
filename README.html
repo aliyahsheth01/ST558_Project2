@@ -363,14 +363,13 @@ studies, strengths, and manufacturing conditions.</p>
 <div id="about-the-data" class="section level2">
 <h2>About the data</h2>
 <p><code>data/tablet_ipc_deidentified.xlsx</code> contains 4,850
-individual tablet measurements from 52 compression lots of an
-immediate-release tablet product under development, made in three
-strengths (Low, Mid, High) across two engineering studies and one
-registration batch campaign. During each lot, samples of 20–30 tablets
-were pulled at defined points in the run (pre-start, beginning, middle,
-end) and each tablet was measured for weight, thickness, and breaking
-force (hardness), either on an bulk automated tablet tester or by
-individual hardness tester</p>
+tablet-level records from 52 compression lots of an immediate-release
+tablet product under development. The data cover three strengths (Low,
+Mid, High), two engineering studies, and one registration batch
+campaign. Samples of 20–30 tablets were collected at defined points
+during compression. Available measurements include weight, thickness,
+and breaking force (hardness), with measurement availability varying
+across records.</p>
 <table>
 <colgroup>
 <col width="33%" />
@@ -450,8 +449,8 @@ tester)</td>
 </tr>
 <tr class="odd">
 <td><code>tablet_no</code></td>
-<td>integer</td>
-<td>Tablet number within the sample</td>
+<td>text</td>
+<td>Tablet number within the sample; stored as character in R</td>
 </tr>
 <tr class="even">
 <td><code>weight_mg</code></td>
@@ -525,9 +524,15 @@ combination and may pool measurements across lots and studies.</p>
 <li><p>Open <code>ST558_Project2.Rproj</code> in RStudio.</p></li>
 <li><p>Install the required packages in the R Console if they are not
 already installed:</p>
-<p>install.packages(c(“shiny”, “readxl”, “dplyr”, “ggplot2”, “DT”,
-“shinycssloaders”))</p></li>
+<pre class="r"><code>install.packages(c(
+  &quot;shiny&quot;, &quot;readxl&quot;, &quot;dplyr&quot;, &quot;ggplot2&quot;, &quot;DT&quot;, &quot;shinycssloaders&quot;
+))</code></pre></li>
+<li><p>Open <code>app.R</code> and click <strong>Run
+App</strong>.</p></li>
 </ol>
+<p>Keep the <code>data</code> and <code>www</code> folders in the
+project directory so the app can locate the workbook and tablet press
+image.</p>
 </div>
 <div id="repository-files" class="section level2">
 <h2>Repository files</h2>
